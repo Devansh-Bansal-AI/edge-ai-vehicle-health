@@ -1,6 +1,7 @@
-﻿# Edge AI Vehicle Health & Predictive Maintenance 🚀
+# Edge AI Vehicle Health & Predictive Maintenance 🚀
 
 > **Team Hackaholics** submission for **InnoVent-27: AI at the Edge** 
+> **Project Category:** *3.2.1.3. Edge AI for Vehicle Health and Predictive Maintenance*
 > *Developing solutions addressing key challenges in Automotive, Industrial Heavy Machinery, and Aerospace industries.*
 
 An advanced, edge-simulated, real-time telemetry and predictive maintenance platform. This project leverages AI, Generative AI, and IoT simulation to enable real-time processing, faster decisions, improved efficiency, and intelligent automation at the source.
