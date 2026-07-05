@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "sonner";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -15,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EdgeAI — Vehicle Health & Predictive Maintenance",
+  title: "EdgeAI - Vehicle Health & Predictive Maintenance",
   description:
     "Real-time edge AI platform for vehicle health monitoring, anomaly detection with Welford's algorithm, and predictive maintenance powered by Google Gemini.",
 };
@@ -28,9 +30,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
+      className={`${dmSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-[#0a0a0f] text-white/90">{children}</body>
+      <body className="min-h-full bg-[#fce9ed] text-gray-900">
+        <Providers>
+          {children}
+        </Providers>
+        <Toaster theme="light" richColors position="top-right" />
+      </body>
     </html>
   );
 }

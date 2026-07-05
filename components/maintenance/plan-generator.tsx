@@ -2,8 +2,15 @@
 
 import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
-export function PlanGenerator() {
+interface PlanGeneratorProps {
+  onPlanGenerated?: (text: string) => void;
+  vehicleId?: string;
+}
+
+export function PlanGenerator({ onPlanGenerated, vehicleId = 'default-vehicle' }: PlanGeneratorProps) {
   const [plan, setPlan] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -18,6 +25,7 @@ export function PlanGenerator() {
         body: JSON.stringify({
           message: 'Generate a comprehensive maintenance plan',
           mode: 'maintenance',
+          vehicleId,
         }),
       });
 
@@ -54,22 +62,23 @@ export function PlanGenerator() {
       setPlan(`⚠ Error generating plan: ${error instanceof Error ? error.message : 'Unknown error'}. Ensure GEMINI_API_KEY is configured.`);
     } finally {
       setLoading(false);
+      if (plan) onPlanGenerated?.(plan);
     }
   };
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden" id="plan-generator">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+    <div className="rounded-xl border border-rose-100 bg-white overflow-hidden" id="plan-generator">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-rose-100">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-purple-400" />
-          <h2 className="text-sm font-semibold text-white/80">AI Maintenance Planner</h2>
+          <Sparkles className="w-4 h-4 text-rose-600" />
+          <h2 className="text-sm font-semibold text-gray-800">AI Maintenance Planner</h2>
         </div>
         <button
           onClick={handleGenerate}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/20 to-cyan-500/20
-                     border border-purple-500/30 rounded-lg text-purple-300 text-xs font-semibold
-                     hover:from-purple-500/30 hover:to-cyan-500/30 hover:border-purple-400/50
+          className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-rose-500/20 to-rose-500/20
+                     border border-rose-500/30 rounded-lg text-rose-600 text-xs font-semibold
+                     hover:from-rose-500/30 hover:to-rose-500/30 hover:border-rose-400/50
                      active:scale-95 transition-all disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
@@ -79,10 +88,10 @@ export function PlanGenerator() {
 
       {plan && (
         <div className="p-5 max-h-96 overflow-y-auto scrollbar-thin">
-          <pre className="text-xs text-white/70 font-mono whitespace-pre-wrap leading-relaxed">
-            {plan}
-            {loading && <span className="inline-block w-2 h-4 bg-purple-400 ml-0.5 animate-pulse" />}
-          </pre>
+          <div className="markdown-response">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{plan}</ReactMarkdown>
+            {loading && <span className="inline-block w-2 h-4 bg-rose-400 ml-0.5 animate-pulse align-middle" />}
+          </div>
         </div>
       )}
     </div>

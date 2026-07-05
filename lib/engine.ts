@@ -1,5 +1,5 @@
-// ============================================
-// Edge AI Vehicle Health — Sensor Simulation Engine
+﻿// ============================================
+// Edge AI Vehicle Health - Sensor Simulation Engine
 // Welford's Online Algorithm + Z-Score Anomaly Detection
 // ============================================
 
@@ -45,6 +45,17 @@ export interface RULComponent {
   urgency: 'low' | 'medium' | 'high' | 'critical';
   confidence: number;
   relatedSensors: string[];
+  estimatedCost: number;
+  safetyRisk: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface CorrelationAlert {
+  sensorA: string;
+  sensorB: string;
+  sensorAName: string;
+  sensorBName: string;
+  coefficient: number;
+  direction: 'positive' | 'negative';
 }
 
 export interface EngineTickData {
@@ -54,6 +65,7 @@ export interface EngineTickData {
   rul: RULComponent[];
   tickCount: number;
   activeAnomaly: ActiveAnomaly | null;
+  correlations: CorrelationAlert[];
 }
 
 interface WelfordStats {
@@ -70,6 +82,72 @@ interface ActiveAnomaly {
   totalTicks: number;
   startTime: Date;
 }
+
+// ===== FAILURE SCENARIO DEFINITIONS =====
+export interface FailureScenario {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  steps: { sensor: string; type: 'spike' | 'drift' | 'drop'; magnitude: number; delayTicks: number; durationTicks: number }[];
+}
+
+export const FAILURE_SCENARIOS: FailureScenario[] = [
+  {
+    id: 'cooling_leak',
+    name: 'Cooling System Leak',
+    description: 'Coolant flow drops, engine temp rises - classic radiator hose failure',
+    icon: '💧',
+    steps: [
+      { sensor: 'coolantFlow', type: 'drop', magnitude: 3.5, delayTicks: 0, durationTicks: 40 },
+      { sensor: 'engineTemp', type: 'drift', magnitude: 3.0, delayTicks: 8, durationTicks: 35 },
+      { sensor: 'exhaustTemp', type: 'drift', magnitude: 2.0, delayTicks: 15, durationTicks: 25 },
+    ],
+  },
+  {
+    id: 'brake_degradation',
+    name: 'Brake System Degradation',
+    description: 'Increasing vibration with intermittent spikes - worn brake pads or warped rotors',
+    icon: '🛑',
+    steps: [
+      { sensor: 'vibration', type: 'drift', magnitude: 3.0, delayTicks: 0, durationTicks: 50 },
+      { sensor: 'vibration', type: 'spike', magnitude: 4.0, delayTicks: 20, durationTicks: 10 },
+    ],
+  },
+  {
+    id: 'electrical_failure',
+    name: 'Electrical System Failure',
+    description: 'Battery voltage drops, multiple sensor readings become erratic',
+    icon: '⚡',
+    steps: [
+      { sensor: 'batteryVoltage', type: 'drop', magnitude: 4.0, delayTicks: 0, durationTicks: 45 },
+      { sensor: 'engineTemp', type: 'spike', magnitude: 2.5, delayTicks: 10, durationTicks: 20 },
+      { sensor: 'oilPressure', type: 'spike', magnitude: 2.0, delayTicks: 12, durationTicks: 18 },
+    ],
+  },
+  {
+    id: 'oil_starvation',
+    name: 'Oil System Starvation',
+    description: 'Oil pressure drops critically, engine temp and vibration climb - oil pump or gasket failure',
+    icon: '🛢️',
+    steps: [
+      { sensor: 'oilPressure', type: 'drop', magnitude: 4.0, delayTicks: 0, durationTicks: 40 },
+      { sensor: 'engineTemp', type: 'drift', magnitude: 3.5, delayTicks: 5, durationTicks: 35 },
+      { sensor: 'vibration', type: 'drift', magnitude: 2.5, delayTicks: 10, durationTicks: 30 },
+    ],
+  },
+  {
+    id: 'turbo_overboost',
+    name: 'Turbo Overboost',
+    description: 'Exhaust temp spikes, engine temp follows - wastegate or boost controller malfunction',
+    icon: '🔥',
+    steps: [
+      { sensor: 'exhaustTemp', type: 'spike', magnitude: 4.5, delayTicks: 0, durationTicks: 30 },
+      { sensor: 'engineTemp', type: 'drift', magnitude: 2.5, delayTicks: 5, durationTicks: 28 },
+      { sensor: 'oilPressure', type: 'spike', magnitude: 2.0, delayTicks: 8, durationTicks: 20 },
+    ],
+  },
+];
 
 // ===== SENSOR CONFIGURATIONS =====
 export const SENSORS: Record<string, SensorConfig> = {
@@ -125,14 +203,14 @@ export const SENSORS: Record<string, SensorConfig> = {
 
 // ===== RUL COMPONENT DEFINITIONS =====
 const RUL_DEFAULTS: RULComponent[] = [
-  { name: 'Brake Pads', daysLeft: 142, totalDays: 365, urgency: 'low', confidence: 91, relatedSensors: ['vibration'] },
-  { name: 'Engine Oil', daysLeft: 28, totalDays: 90, urgency: 'high', confidence: 87, relatedSensors: ['oilPressure', 'engineTemp'] },
-  { name: 'Air Filter', daysLeft: 67, totalDays: 180, urgency: 'medium', confidence: 83, relatedSensors: ['engineTemp', 'exhaustTemp'] },
-  { name: 'Timing Belt', daysLeft: 312, totalDays: 730, urgency: 'low', confidence: 78, relatedSensors: ['vibration', 'engineTemp'] },
-  { name: 'Battery', daysLeft: 89, totalDays: 365, urgency: 'medium', confidence: 85, relatedSensors: ['batteryVoltage'] },
-  { name: 'Spark Plugs', daysLeft: 201, totalDays: 365, urgency: 'low', confidence: 80, relatedSensors: ['engineTemp', 'exhaustTemp'] },
-  { name: 'Transmission Fluid', daysLeft: 45, totalDays: 120, urgency: 'high', confidence: 88, relatedSensors: ['vibration'] },
-  { name: 'Coolant', daysLeft: 14, totalDays: 60, urgency: 'critical', confidence: 92, relatedSensors: ['coolantFlow', 'engineTemp'] },
+  { name: 'Brake Pads', daysLeft: 142, totalDays: 365, urgency: 'low', confidence: 91, relatedSensors: ['vibration'], estimatedCost: 250, safetyRisk: 'critical' },
+  { name: 'Engine Oil', daysLeft: 28, totalDays: 90, urgency: 'high', confidence: 87, relatedSensors: ['oilPressure', 'engineTemp'], estimatedCost: 75, safetyRisk: 'high' },
+  { name: 'Air Filter', daysLeft: 67, totalDays: 180, urgency: 'medium', confidence: 83, relatedSensors: ['engineTemp', 'exhaustTemp'], estimatedCost: 35, safetyRisk: 'low' },
+  { name: 'Timing Belt', daysLeft: 312, totalDays: 730, urgency: 'low', confidence: 78, relatedSensors: ['vibration', 'engineTemp'], estimatedCost: 800, safetyRisk: 'critical' },
+  { name: 'Battery', daysLeft: 89, totalDays: 365, urgency: 'medium', confidence: 85, relatedSensors: ['batteryVoltage'], estimatedCost: 180, safetyRisk: 'medium' },
+  { name: 'Spark Plugs', daysLeft: 201, totalDays: 365, urgency: 'low', confidence: 80, relatedSensors: ['engineTemp', 'exhaustTemp'], estimatedCost: 120, safetyRisk: 'low' },
+  { name: 'Transmission Fluid', daysLeft: 45, totalDays: 120, urgency: 'high', confidence: 88, relatedSensors: ['vibration'], estimatedCost: 200, safetyRisk: 'high' },
+  { name: 'Coolant', daysLeft: 14, totalDays: 60, urgency: 'critical', confidence: 92, relatedSensors: ['coolantFlow', 'engineTemp'], estimatedCost: 95, safetyRisk: 'high' },
 ];
 
 // ===== CONFIG =====
@@ -149,17 +227,19 @@ function gaussianRandom(): number {
 }
 
 // ===== SINGLETON ENGINE STATE =====
-class SimulationEngine {
+export class SimulationEngine {
   private stats: Record<string, WelfordStats> = {};
   private history: Record<string, number[]> = {};
   private currentValues: Record<string, number> = {};
   private activeAnomaly: ActiveAnomaly | null = null;
+  private scenarioQueue: { sensor: string; type: 'spike' | 'drift' | 'drop'; magnitude: number; ticksLeft: number; totalTicks: number; startTime: Date }[] = [];
   private recentAnomalies: AnomalyInfo[] = [];
   private rul: RULComponent[];
   private tickCount = 0;
   private lastAnomalyTick: Record<string, number> = {};
   private healthScore = 90;
   private lastHealthPersist = 0;
+  private correlations: CorrelationAlert[] = [];
 
   constructor() {
     this.rul = JSON.parse(JSON.stringify(RUL_DEFAULTS));
@@ -177,6 +257,14 @@ class SimulationEngine {
     const sensorReadings: Record<string, SensorReading> = {};
     const newAnomalies: AnomalyInfo[] = [];
 
+    // Activate queued scenario steps
+    for (const step of this.scenarioQueue) {
+      if (step.ticksLeft > 0) {
+        step.ticksLeft--;
+      }
+    }
+    this.scenarioQueue = this.scenarioQueue.filter(s => s.ticksLeft > 0 || s.totalTicks > 0);
+
     for (const [key, sensor] of Object.entries(SENSORS)) {
       // Generate base value
       let value = this.generateValue(key, sensor);
@@ -184,6 +272,25 @@ class SimulationEngine {
       // Apply active anomaly if targeting this sensor
       if (this.activeAnomaly?.sensor === key && this.activeAnomaly.ticksLeft > 0) {
         value = this.applyAnomaly(key, sensor, value);
+      }
+
+      // Apply scenario queue anomalies for this sensor
+      for (const step of this.scenarioQueue) {
+        if (step.sensor === key && step.totalTicks > 0) {
+          const progress = 1 - (step.totalTicks / (step.totalTicks + (step.ticksLeft > 0 ? 0 : 1)));
+          switch (step.type) {
+            case 'spike':
+              value += Math.sin(progress * Math.PI) * step.magnitude * sensor.noiseStd * 3;
+              break;
+            case 'drift':
+              value += progress * step.magnitude * sensor.noiseStd * 2;
+              break;
+            case 'drop':
+              value -= step.magnitude * sensor.noiseStd * 2.5 * Math.min(progress * 2, 1);
+              break;
+          }
+          step.totalTicks--;
+        }
       }
 
       // Clamp to physical limits
@@ -235,6 +342,11 @@ class SimulationEngine {
       }
     }
 
+    // Compute correlations every 10 ticks
+    if (this.tickCount % 10 === 0) {
+      this.correlations = this.computeCorrelations();
+    }
+
     // Decay RUL every ~80 ticks (~24s)
     if (this.tickCount % 80 === 0) {
       this.decayRUL();
@@ -250,6 +362,7 @@ class SimulationEngine {
       rul: this.rul,
       tickCount: this.tickCount,
       activeAnomaly: this.activeAnomaly,
+      correlations: this.correlations,
     };
   }
 
@@ -358,6 +471,70 @@ class SimulationEngine {
     };
   }
 
+  // ===== SCENARIO INJECTION =====
+  injectScenario(scenarioId: string): { scenario: FailureScenario; activated: boolean } {
+    const scenario = FAILURE_SCENARIOS.find(s => s.id === scenarioId);
+    if (!scenario) return { scenario: FAILURE_SCENARIOS[0], activated: false };
+
+    // Queue all scenario steps with their delay offsets
+    for (const step of scenario.steps) {
+      this.scenarioQueue.push({
+        sensor: step.sensor,
+        type: step.type,
+        magnitude: step.magnitude,
+        ticksLeft: step.delayTicks, // countdown before activation
+        totalTicks: step.durationTicks,
+        startTime: new Date(),
+      });
+    }
+
+    return { scenario, activated: true };
+  }
+
+  // ===== PEARSON CORRELATION DETECTION =====
+  private computeCorrelations(): CorrelationAlert[] {
+    const alerts: CorrelationAlert[] = [];
+    const keys = Object.keys(SENSORS);
+    const windowSize = 30; // Last 30 readings
+
+    for (let i = 0; i < keys.length; i++) {
+      for (let j = i + 1; j < keys.length; j++) {
+        const hA = this.history[keys[i]];
+        const hB = this.history[keys[j]];
+        if (hA.length < windowSize || hB.length < windowSize) continue;
+
+        const a = hA.slice(-windowSize);
+        const b = hB.slice(-windowSize);
+
+        const r = this.pearsonR(a, b);
+        if (Math.abs(r) > 0.7) {
+          alerts.push({
+            sensorA: keys[i],
+            sensorB: keys[j],
+            sensorAName: SENSORS[keys[i]].name,
+            sensorBName: SENSORS[keys[j]].name,
+            coefficient: Math.round(r * 100) / 100,
+            direction: r > 0 ? 'positive' : 'negative',
+          });
+        }
+      }
+    }
+    return alerts;
+  }
+
+  private pearsonR(a: number[], b: number[]): number {
+    const n = a.length;
+    let sumA = 0, sumB = 0, sumAB = 0, sumA2 = 0, sumB2 = 0;
+    for (let i = 0; i < n; i++) {
+      sumA += a[i]; sumB += b[i];
+      sumAB += a[i] * b[i];
+      sumA2 += a[i] * a[i]; sumB2 += b[i] * b[i];
+    }
+    const num = n * sumAB - sumA * sumB;
+    const den = Math.sqrt((n * sumA2 - sumA * sumA) * (n * sumB2 - sumB * sumB));
+    return den === 0 ? 0 : num / den;
+  }
+
   // ===== RUL DEGRADATION =====
   private degradeRUL(sensorKey: string, amount: number): void {
     for (const component of this.rul) {
@@ -384,17 +561,17 @@ class SimulationEngine {
 
   // ===== HEALTH SCORE =====
   private computeHealthScore(): number {
-    // 40% — Average RUL percentage
+    // 40% - Average RUL percentage
     const avgRulPct = this.rul.reduce((sum, c) => sum + (c.daysLeft / c.totalDays), 0) / this.rul.length;
     const rulScore = avgRulPct * 100;
 
-    // 40% — Recent anomaly frequency (inverse)
+    // 40% - Recent anomaly frequency (inverse)
     const recentAnomalies = this.recentAnomalies.filter(
       a => Date.now() - a.timestamp.getTime() < 60000
     ).length;
     const anomalyScore = Math.max(0, 100 - recentAnomalies * 15);
 
-    // 20% — Current Z-score stability
+    // 20% - Current Z-score stability
     let avgZ = 0;
     let count = 0;
     for (const key of Object.keys(SENSORS)) {
@@ -459,6 +636,10 @@ class SimulationEngine {
     return false;
   }
 
+  getCorrelations(): CorrelationAlert[] {
+    return this.correlations;
+  }
+
   // Build context payload for Gemini
   buildDiagnosticContext(): object {
     const currentReadings: Record<string, { value: number; unit: string; status: string; zScore: number }> = {};
@@ -474,9 +655,9 @@ class SimulationEngine {
       };
     }
 
-    const componentRUL: Record<string, number> = {};
+    const componentRUL: Record<string, { daysLeft: number; estimatedCost: number; safetyRisk: string }> = {};
     for (const c of this.rul) {
-      componentRUL[c.name] = c.daysLeft;
+      componentRUL[c.name] = { daysLeft: c.daysLeft, estimatedCost: c.estimatedCost, safetyRisk: c.safetyRisk };
     }
 
     return {
@@ -484,6 +665,11 @@ class SimulationEngine {
       recentReadings: this.getAllRecentReadings(20),
       componentRUL,
       vehicleHealthScore: this.healthScore,
+      sensorCorrelations: this.correlations.map(c => ({
+        sensors: `${c.sensorAName} ↔ ${c.sensorBName}`,
+        correlation: c.coefficient,
+        direction: c.direction,
+      })),
       activeAnomaly: this.activeAnomaly ? {
         sensor: this.activeAnomaly.sensor,
         sensorName: SENSORS[this.activeAnomaly.sensor]?.name,

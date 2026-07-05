@@ -39,11 +39,11 @@ export function SensorCanvas({ config, data, status, maxPoints = 60 }: SensorCan
     // Normal range band
     const nMinY = height - ((config.normalMin - yMin) / yRange) * height;
     const nMaxY = height - ((config.normalMax - yMin) / yRange) * height;
-    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.fillStyle = 'rgba(16,10,14,0.04)';
     ctx.fillRect(0, nMaxY, width, nMinY - nMaxY);
 
     // Threshold lines
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.strokeStyle = 'rgba(16,10,14,0.08)';
     ctx.lineWidth = 0.5;
     ctx.setLineDash([2, 4]);
     [nMinY, nMaxY].forEach(y => {

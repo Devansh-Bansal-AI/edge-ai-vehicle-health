@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Terminal, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -10,9 +12,10 @@ interface Message {
 
 interface ChatTerminalProps {
   onSendMessage?: (message: string) => void;
+  vehicleId?: string;
 }
 
-export function ChatTerminal({ onSendMessage }: ChatTerminalProps) {
+export function ChatTerminal({ onSendMessage, vehicleId = 'default-vehicle' }: ChatTerminalProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -43,7 +46,7 @@ export function ChatTerminal({ onSendMessage }: ChatTerminalProps) {
       const res = await fetch('/api/ai/diagnose', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, chatHistory }),
+        body: JSON.stringify({ message, chatHistory, vehicleId }),
       });
 
       if (!res.body) throw new Error('No response body');
@@ -102,24 +105,24 @@ export function ChatTerminal({ onSendMessage }: ChatTerminalProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#06060a] rounded-xl border border-white/[0.06] overflow-hidden" id="chat-terminal">
+    <div className="flex flex-col h-full bg-[#ffffff] rounded-xl border border-rose-100 overflow-hidden" id="chat-terminal">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
-        <Terminal className="w-4 h-4 text-emerald-400" />
-        <span className="text-xs font-semibold text-white/70 uppercase tracking-wider">AI Diagnostic Terminal</span>
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-rose-100 bg-white">
+        <Terminal className="w-4 h-4 text-emerald-600" />
+        <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">AI Diagnostic Terminal</span>
         <div className="ml-auto flex items-center gap-1.5">
           <div className={`w-2 h-2 rounded-full ${streaming ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
-          <span className="text-[10px] text-white/40">{streaming ? 'Processing...' : 'Ready'}</span>
+          <span className="text-[10px] text-gray-500">{streaming ? 'Processing...' : 'Ready'}</span>
         </div>
       </div>
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-white/20 space-y-3">
+          <div className="flex flex-col items-center justify-center h-full text-gray-300 space-y-3">
             <Terminal className="w-8 h-8" />
             <p className="text-sm text-center">Edge AI Diagnostic System Online</p>
-            <p className="text-xs text-center text-white/10 max-w-md">
+            <p className="text-xs text-center text-gray-300 max-w-md">
               Ask about sensor anomalies, component health, or type a question like &ldquo;Why is my oil pressure dropping?&rdquo;
             </p>
             <div className="flex flex-wrap gap-2 mt-4">
@@ -131,8 +134,8 @@ export function ChatTerminal({ onSendMessage }: ChatTerminalProps) {
                 <button
                   key={suggestion}
                   onClick={() => handleSend(suggestion)}
-                  className="text-[10px] px-3 py-1.5 border border-white/10 rounded-full text-white/30
-                             hover:border-cyan-500/30 hover:text-cyan-400 transition-all"
+                  className="text-[10px] px-3 py-1.5 border border-gray-200 rounded-full text-gray-400
+                             hover:border-rose-500/30 hover:text-rose-600 transition-all"
                 >
                   {suggestion}
                 </button>
@@ -145,22 +148,28 @@ export function ChatTerminal({ onSendMessage }: ChatTerminalProps) {
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] rounded-xl px-4 py-3 ${
               msg.role === 'user'
-                ? 'bg-cyan-500/10 border border-cyan-500/20 text-white/90'
-                : 'bg-emerald-500/5 border border-emerald-500/10 text-emerald-100/80 font-mono'
+                ? 'bg-rose-500/10 border border-rose-500/20 text-gray-900'
+                : 'bg-emerald-500/5 border border-emerald-500/10 text-emerald-700 font-mono'
             }`}>
-              <pre className="text-xs whitespace-pre-wrap break-words leading-relaxed">
-                {msg.content}
-                {streaming && i === messages.length - 1 && msg.role === 'assistant' && (
-                  <span className="inline-block w-2 h-4 bg-emerald-400 ml-0.5 animate-pulse" />
-                )}
-              </pre>
+              {msg.role === 'assistant' ? (
+                <div className="markdown-response">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                  {streaming && i === messages.length - 1 && (
+                    <span className="inline-block w-2 h-4 bg-emerald-400 ml-0.5 animate-pulse align-middle" />
+                  )}
+                </div>
+              ) : (
+                <pre className="text-xs whitespace-pre-wrap break-words leading-relaxed">
+                  {msg.content}
+                </pre>
+              )}
             </div>
           </div>
         ))}
       </div>
 
       {/* Input */}
-      <div className="border-t border-white/[0.06] p-3 bg-white/[0.02]">
+      <div className="border-t border-rose-100 p-3 bg-white">
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -169,15 +178,15 @@ export function ChatTerminal({ onSendMessage }: ChatTerminalProps) {
             onKeyDown={e => e.key === 'Enter' && handleSend()}
             placeholder="Ask about vehicle diagnostics..."
             disabled={streaming}
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90
-                       placeholder:text-white/20 focus:border-cyan-500/30 focus:outline-none
+            className="flex-1 bg-rose-50/60 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900
+                       placeholder:text-gray-300 focus:border-rose-500/30 focus:outline-none
                        disabled:opacity-50 font-mono"
           />
           <button
             onClick={() => handleSend()}
             disabled={streaming || !input.trim()}
-            className="p-2 bg-cyan-500/20 border border-cyan-500/30 rounded-lg text-cyan-400
-                       hover:bg-cyan-500/30 disabled:opacity-30 transition-all"
+            className="p-2 bg-rose-500/20 border border-rose-500/30 rounded-lg text-rose-600
+                       hover:bg-rose-500/30 disabled:opacity-30 transition-all"
           >
             {streaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </button>

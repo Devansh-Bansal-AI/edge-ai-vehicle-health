@@ -1,22 +1,61 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Create default vehicle
-  const vehicle = await prisma.vehicle.upsert({
-    where: { vin: 'EDGE-AI-SIM-001' },
+  // Create default tenant
+  const tenant = await prisma.tenant.upsert({
+    where: { id: 'default-tenant' },
     update: {},
     create: {
-      id: 'default-vehicle',
-      name: 'Edge AI Fleet Unit 7',
-      vin: 'EDGE-AI-SIM-001',
+      id: 'default-tenant',
+      name: 'Acme Fleet Services',
     },
   });
 
-  console.log(`✅ Vehicle created: ${vehicle.name} (${vehicle.vin})`);
+  console.log(`✅ Tenant verified: ${tenant.name}`);
+
+  // Create default user
+  const user = await prisma.user.upsert({
+    where: { email: 'admin@edgeai.com' },
+    update: {},
+    create: {
+      email: 'admin@edgeai.com',
+      password: 'admin123', // In a real app this would be hashed!
+      name: 'Fleet Admin',
+      tenantId: tenant.id,
+    },
+  });
+
+  console.log(`✅ User verified: ${user.email}`);
+
+  // Seed all fleet vehicles
+  const FLEET_VEHICLES = [
+    { id: 'vehicle-1', name: 'Fleet Unit 1 - Heavy Hauler', vin: 'EDGE-AI-FLT-001' },
+    { id: 'vehicle-2', name: 'Fleet Unit 2 - City Runner', vin: 'EDGE-AI-FLT-002' },
+    { id: 'vehicle-3', name: 'Fleet Unit 3 - Highway Cruiser', vin: 'EDGE-AI-FLT-003' },
+    { id: 'vehicle-4', name: 'Fleet Unit 4 - Off-Road', vin: 'EDGE-AI-FLT-004' },
+    { id: 'default-vehicle', name: 'Fleet Unit 7 - Primary', vin: 'EDGE-AI-SIM-001' },
+  ];
+
+  let primaryVehicleId = 'default-vehicle';
+
+  for (const v of FLEET_VEHICLES) {
+    await prisma.vehicle.upsert({
+      where: { vin: v.vin },
+      update: { tenantId: tenant.id },
+      create: {
+        id: v.id,
+        name: v.name,
+        vin: v.vin,
+        tenantId: tenant.id,
+      },
+    });
+  }
+
+  console.log(`✅ ${FLEET_VEHICLES.length} Vehicles verified`);
 
   // Seed initial maintenance records
   const components = [
@@ -38,7 +77,7 @@ async function main() {
       update: { rulDays: comp.rulDays },
       create: {
         id: `seed-${comp.component.toLowerCase().replace(/\s/g, '-')}`,
-        vehicleId: vehicle.id,
+        vehicleId: primaryVehicleId,
         component: comp.component,
         rulDays: comp.rulDays,
       },
@@ -50,7 +89,7 @@ async function main() {
   // Seed initial health snapshot
   await prisma.healthSnapshot.create({
     data: {
-      vehicleId: vehicle.id,
+      vehicleId: primaryVehicleId,
       score: 90,
     },
   });

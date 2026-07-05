@@ -21,17 +21,17 @@ export function AnomalyLog({ anomalies }: AnomalyLogProps) {
     <div className="flex flex-col h-full" id="anomaly-log">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-amber-400" />
-          <h3 className="text-xs font-semibold text-white/70 uppercase tracking-wider">Anomaly Feed</h3>
+          <AlertTriangle className="w-4 h-4 text-amber-600" />
+          <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Anomaly Feed</h3>
         </div>
-        <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded-full">
+        <span className="text-[10px] font-mono text-gray-500 bg-rose-50/60 px-2 py-0.5 rounded-full">
           {anomalies.length} events
         </span>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
         {anomalies.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-white/20">
+          <div className="flex flex-col items-center justify-center h-32 text-gray-300">
             <AlertTriangle className="w-6 h-6 mb-2" />
             <span className="text-xs">No anomalies detected</span>
           </div>
@@ -50,16 +50,16 @@ export function AnomalyLog({ anomalies }: AnomalyLogProps) {
               </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-white/90">
+                  <span className="text-xs font-semibold text-gray-900">
                     {anomaly.sensorName}
                   </span>
                   <span className={`text-[10px] font-semibold uppercase ${
-                    anomaly.severity === 'critical' ? 'text-red-400' : 'text-amber-400'
+                    anomaly.severity === 'critical' ? 'text-red-600' : 'text-amber-600'
                   }`}>
                     {anomaly.severity}
                   </span>
                 </div>
-                <p className="text-[10px] text-white/50 font-mono mt-0.5">
+                <p className="text-[10px] text-gray-500 font-mono mt-0.5">
                   Z:{anomaly.zScore.toFixed(1)} | {anomaly.faultType} | {new Date(anomaly.timestamp).toLocaleTimeString()}
                 </p>
               </div>

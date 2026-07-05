@@ -21,30 +21,30 @@ export function SensorCard({ sensorKey, reading, history }: SensorCardProps) {
   const trend = reading?.trend ?? 'stable';
 
   const statusColors = {
-    normal: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
-    warning: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
-    critical: 'text-red-400 bg-red-400/10 border-red-400/20 animate-pulse',
+    normal: 'text-emerald-600 bg-emerald-400/10 border-emerald-400/20',
+    warning: 'text-amber-600 bg-amber-400/10 border-amber-400/20',
+    critical: 'text-red-600 bg-red-400/10 border-red-400/20 animate-pulse',
   };
 
   const borderGlow = {
-    normal: 'border-white/[0.06]',
+    normal: 'border-rose-100',
     warning: 'border-amber-500/30 shadow-[0_0_15px_-3px_rgba(245,158,11,0.15)]',
     critical: 'border-red-500/30 shadow-[0_0_20px_-3px_rgba(239,68,68,0.2)]',
   };
 
   const TrendIcon = trend === 'rising' ? TrendingUp : trend === 'falling' ? TrendingDown : Minus;
-  const trendColor = trend === 'rising' ? 'text-amber-400' : trend === 'falling' ? 'text-cyan-400' : 'text-white/40';
+  const trendColor = trend === 'rising' ? 'text-amber-600' : trend === 'falling' ? 'text-rose-600' : 'text-gray-500';
 
   return (
     <div
       id={`sensor-card-${sensorKey}`}
-      className={`relative rounded-xl border bg-white/[0.02] backdrop-blur-sm p-4 transition-all duration-300 ${borderGlow[status]}`}
+      className={`relative rounded-xl border bg-white backdrop-blur-sm p-4 transition-all duration-300 ${borderGlow[status]}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Activity className="w-3.5 h-3.5" style={{ color: config.color }} />
-          <span className="text-xs font-medium text-white/70 uppercase tracking-wider">{config.name}</span>
+          <span className="text-xs font-medium text-gray-700 uppercase tracking-wider">{config.name}</span>
         </div>
         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColors[status]}`}>
           {status === 'critical' ? '⚠ CRITICAL' : status === 'warning' ? 'WARNING' : 'NORMAL'}
@@ -53,16 +53,16 @@ export function SensorCard({ sensorKey, reading, history }: SensorCardProps) {
 
       {/* Value Display */}
       <div className="flex items-baseline gap-2 mb-1">
-        <span className="text-2xl font-mono font-bold text-white tabular-nums">
+        <span className="text-2xl font-mono font-bold text-gray-900 tabular-nums">
           {config.noiseStd < 1 ? value.toFixed(1) : Math.round(value)}
         </span>
-        <span className="text-xs text-white/40 font-mono">{config.unit}</span>
+        <span className="text-xs text-gray-500 font-mono">{config.unit}</span>
       </div>
 
       {/* Z-Score & Trend */}
       <div className="flex items-center gap-3 mb-3">
-        <span className="text-[10px] font-mono text-white/50">
-          Z: <span className={zScore > 3.75 ? 'text-red-400' : zScore > 2.5 ? 'text-amber-400' : 'text-white/60'}>{zScore.toFixed(1)}</span>
+        <span className="text-[10px] font-mono text-gray-500">
+          Z: <span className={zScore > 3.75 ? 'text-red-600' : zScore > 2.5 ? 'text-amber-600' : 'text-gray-600'}>{zScore.toFixed(1)}</span>
         </span>
         <div className={`flex items-center gap-1 ${trendColor}`}>
           <TrendIcon className="w-3 h-3" />
@@ -71,7 +71,7 @@ export function SensorCard({ sensorKey, reading, history }: SensorCardProps) {
       </div>
 
       {/* Chart */}
-      <div className="h-20 w-full rounded-lg overflow-hidden bg-black/20">
+      <div className="h-20 w-full rounded-lg overflow-hidden bg-rose-50/50">
         <SensorCanvas
           sensorKey={sensorKey}
           config={config}

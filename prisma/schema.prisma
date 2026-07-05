@@ -8,14 +8,39 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Tenant {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  users     User[]
+  vehicles  Vehicle[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  tenantId  String
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
 model Vehicle {
   id          String              @id @default(cuid())
   name        String
   vin         String              @unique
+  tenantId    String
   createdAt   DateTime            @default(now())
+  tenant      Tenant              @relation(fields: [tenantId], references: [id])
   anomalies   AnomalyEvent[]
   maintenance MaintenanceRecord[]
   snapshots   HealthSnapshot[]
+  diagnostic  DiagnosticSession[]
+
+  @@index([tenantId])
 }
 
 model AnomalyEvent {
@@ -29,10 +54,8 @@ model AnomalyEvent {
   createdAt DateTime @default(now())
   vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
 
-  @@index([vehicleId])
-  @@index([sensor])
-  @@index([severity])
-  @@index([createdAt])
+  @@index([vehicleId, createdAt(sort: Desc)])
+  @@index([vehicleId, sensor, createdAt(sort: Desc)])
 }
 
 model MaintenanceRecord {
@@ -55,8 +78,7 @@ model HealthSnapshot {
   createdAt DateTime @default(now())
   vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
 
-  @@index([vehicleId])
-  @@index([createdAt])
+  @@index([vehicleId, createdAt(sort: Desc)])
 }
 
 model DiagnosticSession {
@@ -64,7 +86,7 @@ model DiagnosticSession {
   vehicleId String
   messages  Json
   createdAt DateTime @default(now())
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
 
-  @@index([vehicleId])
-  @@index([createdAt])
+  @@index([vehicleId, createdAt(sort: Desc)])
 }

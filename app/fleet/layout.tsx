@@ -2,7 +2,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { Suspense } from 'react';
 
-export default function DiagnosticsLayout({
+export default function FleetLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -14,7 +14,7 @@ export default function DiagnosticsLayout({
       </Suspense>
       <div className="flex-1 ml-[220px] flex flex-col">
         <Header />
-        <main className="flex-1 p-6 overflow-hidden">
+        <main className="flex-1 p-6 overflow-auto">
           {children}
         </main>
       </div>

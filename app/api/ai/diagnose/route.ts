@@ -1,27 +1,52 @@
-import { NextRequest } from 'next/server';
-import { engine } from '@/lib/engine';
+﻿import { NextRequest } from 'next/server';
+import { fleetManager } from '@/lib/fleet';
 import { streamDiagnosis, streamMaintenancePlan } from '@/lib/gemini';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
-const VEHICLE_ID = 'default-vehicle';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { message, chatHistory = [], mode = 'diagnose' } = body as {
-      message: string;
+    const session = await getServerSession(authOptions);
+    const tenantId = (session?.user as any)?.tenantId;
+
+    if (!tenantId) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const { message, chatHistory = [], mode = 'diagnose', vehicleId = 'default-vehicle' } = body as {
+      message?: string;
       chatHistory?: Array<{ role: string; content: string }>;
       mode?: 'diagnose' | 'maintenance';
+      vehicleId?: string;
     };
 
-    if (!message) {
-      return new Response(JSON.stringify({ error: 'Message is required' }), {
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return new Response(JSON.stringify({ error: 'Valid message is required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
+    // Verify tenant ownership of the vehicle
+    const dbVehicle = await prisma.vehicle.findFirst({
+      where: { id: vehicleId, tenantId: tenantId }
+    });
+
+    if (!dbVehicle) {
+      return new Response(JSON.stringify({ error: 'Vehicle not found or unauthorized' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const vehicle = fleetManager.getVehicle(vehicleId) ?? fleetManager.getVehicle('default-vehicle')!;
     const encoder = new TextEncoder();
     let fullResponse = '';
 
@@ -31,11 +56,11 @@ export async function POST(request: NextRequest) {
           let generator: AsyncGenerator<string>;
 
           if (mode === 'maintenance') {
-            const rul = engine.getRUL();
-            const healthScore = engine.getHealthScore();
+            const rul = vehicle.engine.getRUL();
+            const healthScore = vehicle.engine.getHealthScore();
             generator = streamMaintenancePlan(rul, healthScore);
           } else {
-            const context = engine.buildDiagnosticContext();
+            const context = vehicle.engine.buildDiagnosticContext();
             generator = streamDiagnosis(message, context, chatHistory);
           }
 
@@ -57,12 +82,12 @@ export async function POST(request: NextRequest) {
             ];
             await prisma.diagnosticSession.create({
               data: {
-                vehicleId: VEHICLE_ID,
+                vehicleId: vehicle.id,
                 messages: messages,
               },
             });
           } catch {
-            // DB not configured — skip persistence
+            // DB persistence failed - skip
           }
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : 'Unknown error';
