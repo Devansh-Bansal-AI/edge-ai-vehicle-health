@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import { Zap } from 'lucide-react';
@@ -8,7 +8,7 @@ interface HealthGaugeProps {
   size?: number;
 }
 
-// Segmented arc gauge — inspired by the "Fast Car" vehicle-score dial.
+// Segmented arc gauge - inspired by the "Fast Car" vehicle-score dial.
 const SEGMENTS = 20;
 const SWEEP = 250; // total degrees covered (opening at the bottom)
 

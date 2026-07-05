@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -65,7 +65,7 @@ export default function FleetPage() {
             Fleet Overview
           </h1>
           <p className="text-xs text-gray-400 mt-0.5">
-            Aggregated health monitoring across all fleet vehicles — sorted by risk
+            Aggregated health monitoring across all fleet vehicles - sorted by risk
           </p>
         </div>
         <button
@@ -126,7 +126,7 @@ export default function FleetPage() {
           <div className="rounded-xl border border-rose-100 bg-white overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-4 border-b border-rose-100">
               <Activity className="w-4 h-4 text-rose-600" />
-              <h2 className="text-sm font-semibold text-gray-800">Vehicle Status — Sorted by Risk</h2>
+              <h2 className="text-sm font-semibold text-gray-800">Vehicle Status - Sorted by Risk</h2>
             </div>
 
             <div className="overflow-x-auto">
@@ -189,7 +189,7 @@ export default function FleetPage() {
                               {vehicle.correlationCount}
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-300">—</span>
+                            <span className="text-xs text-gray-300">-</span>
                           )}
                         </td>
                         <td className="px-5 py-3">

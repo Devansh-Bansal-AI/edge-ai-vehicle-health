@@ -1,5 +1,5 @@
-// ============================================
-// Edge AI Vehicle Health — Sensor Simulation Engine
+﻿// ============================================
+// Edge AI Vehicle Health - Sensor Simulation Engine
 // Welford's Online Algorithm + Z-Score Anomaly Detection
 // ============================================
 
@@ -96,7 +96,7 @@ export const FAILURE_SCENARIOS: FailureScenario[] = [
   {
     id: 'cooling_leak',
     name: 'Cooling System Leak',
-    description: 'Coolant flow drops, engine temp rises — classic radiator hose failure',
+    description: 'Coolant flow drops, engine temp rises - classic radiator hose failure',
     icon: '💧',
     steps: [
       { sensor: 'coolantFlow', type: 'drop', magnitude: 3.5, delayTicks: 0, durationTicks: 40 },
@@ -107,7 +107,7 @@ export const FAILURE_SCENARIOS: FailureScenario[] = [
   {
     id: 'brake_degradation',
     name: 'Brake System Degradation',
-    description: 'Increasing vibration with intermittent spikes — worn brake pads or warped rotors',
+    description: 'Increasing vibration with intermittent spikes - worn brake pads or warped rotors',
     icon: '🛑',
     steps: [
       { sensor: 'vibration', type: 'drift', magnitude: 3.0, delayTicks: 0, durationTicks: 50 },
@@ -128,7 +128,7 @@ export const FAILURE_SCENARIOS: FailureScenario[] = [
   {
     id: 'oil_starvation',
     name: 'Oil System Starvation',
-    description: 'Oil pressure drops critically, engine temp and vibration climb — oil pump or gasket failure',
+    description: 'Oil pressure drops critically, engine temp and vibration climb - oil pump or gasket failure',
     icon: '🛢️',
     steps: [
       { sensor: 'oilPressure', type: 'drop', magnitude: 4.0, delayTicks: 0, durationTicks: 40 },
@@ -139,7 +139,7 @@ export const FAILURE_SCENARIOS: FailureScenario[] = [
   {
     id: 'turbo_overboost',
     name: 'Turbo Overboost',
-    description: 'Exhaust temp spikes, engine temp follows — wastegate or boost controller malfunction',
+    description: 'Exhaust temp spikes, engine temp follows - wastegate or boost controller malfunction',
     icon: '🔥',
     steps: [
       { sensor: 'exhaustTemp', type: 'spike', magnitude: 4.5, delayTicks: 0, durationTicks: 30 },
@@ -561,17 +561,17 @@ export class SimulationEngine {
 
   // ===== HEALTH SCORE =====
   private computeHealthScore(): number {
-    // 40% — Average RUL percentage
+    // 40% - Average RUL percentage
     const avgRulPct = this.rul.reduce((sum, c) => sum + (c.daysLeft / c.totalDays), 0) / this.rul.length;
     const rulScore = avgRulPct * 100;
 
-    // 40% — Recent anomaly frequency (inverse)
+    // 40% - Recent anomaly frequency (inverse)
     const recentAnomalies = this.recentAnomalies.filter(
       a => Date.now() - a.timestamp.getTime() < 60000
     ).length;
     const anomalyScore = Math.max(0, 100 - recentAnomalies * 15);
 
-    // 20% — Current Z-score stability
+    // 20% - Current Z-score stability
     let avgZ = 0;
     let count = 0;
     for (const key of Object.keys(SENSORS)) {

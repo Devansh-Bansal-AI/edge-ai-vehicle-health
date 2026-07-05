@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
-const VEHICLE_ID = 'default-vehicle';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    const tenantId = (session?.user as any)?.tenantId;
+
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
+    const vehicleId = searchParams.get('vehicleId');
     const hours = parseInt(searchParams.get('hours') ?? '24');
     const limit = Math.min(parseInt(searchParams.get('limit') ?? '200'), 500);
 
@@ -13,7 +21,10 @@ export async function GET(request: NextRequest) {
 
     const snapshots = await prisma.healthSnapshot.findMany({
       where: {
-        vehicleId: VEHICLE_ID,
+        vehicle: {
+          tenantId: tenantId,
+          ...(vehicleId ? { id: vehicleId } : {}),
+        },
         createdAt: { gte: since },
       },
       orderBy: { createdAt: 'asc' },

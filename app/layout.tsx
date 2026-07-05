@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { DM_Sans, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EdgeAI — Vehicle Health & Predictive Maintenance",
+  title: "EdgeAI - Vehicle Health & Predictive Maintenance",
   description:
     "Real-time edge AI platform for vehicle health monitoring, anomaly detection with Welford's algorithm, and predictive maintenance powered by Google Gemini.",
 };

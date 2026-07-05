@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -51,12 +51,12 @@ function DiagnosticsContent() {
 
   return (
     <div className="h-[calc(100vh-7rem)] flex gap-4" id="diagnostics-page">
-      {/* Main Chat Terminal — 70% */}
+      {/* Main Chat Terminal - 70% */}
       <div className="flex-[7] min-w-0">
         <ChatTerminal vehicleId={vehicleId} />
       </div>
 
-      {/* Context Panel — 30% */}
+      {/* Context Panel - 30% */}
       <div className="flex-[3] min-w-[280px]">
         <ContextPanel
           readings={readings}

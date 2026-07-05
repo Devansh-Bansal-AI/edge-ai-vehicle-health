@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Terminal, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -149,12 +151,18 @@ export function ChatTerminal({ onSendMessage, vehicleId = 'default-vehicle' }: C
                 ? 'bg-rose-500/10 border border-rose-500/20 text-gray-900'
                 : 'bg-emerald-500/5 border border-emerald-500/10 text-emerald-700 font-mono'
             }`}>
-              <pre className="text-xs whitespace-pre-wrap break-words leading-relaxed">
-                {msg.content}
-                {streaming && i === messages.length - 1 && msg.role === 'assistant' && (
-                  <span className="inline-block w-2 h-4 bg-emerald-400 ml-0.5 animate-pulse" />
-                )}
-              </pre>
+              {msg.role === 'assistant' ? (
+                <div className="markdown-response">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                  {streaming && i === messages.length - 1 && (
+                    <span className="inline-block w-2 h-4 bg-emerald-400 ml-0.5 animate-pulse align-middle" />
+                  )}
+                </div>
+              ) : (
+                <pre className="text-xs whitespace-pre-wrap break-words leading-relaxed">
+                  {msg.content}
+                </pre>
+              )}
             </div>
           </div>
         ))}

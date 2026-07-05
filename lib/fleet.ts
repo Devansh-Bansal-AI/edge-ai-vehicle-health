@@ -1,5 +1,5 @@
-// ============================================
-// Fleet Manager — Multi-Vehicle Engine Instances
+﻿// ============================================
+// Fleet Manager - Multi-Vehicle Engine Instances
 // ============================================
 
 import { SimulationEngine, type EngineTickData, type RULComponent } from './engine';
@@ -30,11 +30,11 @@ export interface FleetOverview {
 }
 
 const FLEET_VEHICLES = [
-  { id: 'vehicle-1', name: 'Fleet Unit 1 — Heavy Hauler', vin: 'EDGE-AI-FLT-001' },
-  { id: 'vehicle-2', name: 'Fleet Unit 2 — City Runner', vin: 'EDGE-AI-FLT-002' },
-  { id: 'vehicle-3', name: 'Fleet Unit 3 — Highway Cruiser', vin: 'EDGE-AI-FLT-003' },
-  { id: 'vehicle-4', name: 'Fleet Unit 4 — Off-Road', vin: 'EDGE-AI-FLT-004' },
-  { id: 'default-vehicle', name: 'Fleet Unit 7 — Primary', vin: 'EDGE-AI-SIM-001' },
+  { id: 'vehicle-1', name: 'Fleet Unit 1 - Heavy Hauler', vin: 'EDGE-AI-FLT-001' },
+  { id: 'vehicle-2', name: 'Fleet Unit 2 - City Runner', vin: 'EDGE-AI-FLT-002' },
+  { id: 'vehicle-3', name: 'Fleet Unit 3 - Highway Cruiser', vin: 'EDGE-AI-FLT-003' },
+  { id: 'vehicle-4', name: 'Fleet Unit 4 - Off-Road', vin: 'EDGE-AI-FLT-004' },
+  { id: 'default-vehicle', name: 'Fleet Unit 7 - Primary', vin: 'EDGE-AI-SIM-001' },
 ];
 
 class FleetManager {

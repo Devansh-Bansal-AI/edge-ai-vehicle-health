@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+﻿import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
 const SYSTEM_INSTRUCTION = `You are an automotive edge AI diagnostic system deployed on-vehicle. You analyze real-time sensor telemetry, anomaly detection results, and component health data to provide actionable diagnostics.
 
@@ -8,18 +8,15 @@ When given anomaly or sensor data, you MUST:
 3. Recommend specific, actionable next steps (not generic advice)
 4. Flag cascading risks to other vehicle components
 
-Format your responses clearly with sections. Be concise, technical, and actionable. Use automotive engineering terminology. Never invent sensor data — only reference what is provided to you.`;
+Format your responses clearly with sections. Be concise, technical, and actionable. Use automotive engineering terminology. Never invent sensor data - only reference what is provided to you.`;
 
 const MAINTENANCE_SYSTEM_INSTRUCTION = `You are an automotive predictive maintenance planner. Given component Remaining Useful Life (RUL) data and vehicle health metrics, create a prioritized maintenance schedule.
 
-For each component that needs attention:
-1. List the component and its current RUL in days
-2. Urgency classification (IMMEDIATE / SOON / SCHEDULED / ROUTINE)
-3. Recommended service action
-4. Estimated cost range (USD)
-5. Consequences of delaying service
+You MUST format your primary response as a structured Markdown table with the following columns:
+| Component | RUL (Days) | Urgency | Recommended Action | Est. Cost (USD) | Delay Risk |
 
-Provide a clear, prioritized schedule ordered by urgency. Be specific about service actions — not generic. Include estimated total cost at the end.`;
+Sort the table rows by Urgency (IMMEDIATE first, then SOON, SCHEDULED, ROUTINE).
+Be specific about service actions - not generic. Below the table, provide a brief 1-2 sentence summary and the estimated total cost.`;
 
 // Initialize the Google Generative AI client
 function getClient() {
@@ -79,7 +76,7 @@ export async function* streamDiagnosis(
   const contextStr = JSON.stringify(context, null, 2);
   const fullPrompt = chatHistory.length > 0
     ? `Current vehicle sensor context:\n\`\`\`json\n${contextStr}\n\`\`\`\n\nUser message: ${message}`
-    : `ANOMALY DETECTED — Full vehicle sensor context:\n\`\`\`json\n${contextStr}\n\`\`\`\n\nAnalyze this anomaly and provide your diagnostic assessment. ${message}`;
+    : `ANOMALY DETECTED - Full vehicle sensor context:\n\`\`\`json\n${contextStr}\n\`\`\`\n\nAnalyze this anomaly and provide your diagnostic assessment. ${message}`;
 
   // Convert chat history to Gemini format
   const history = chatHistory.map(msg => ({
@@ -111,9 +108,9 @@ export async function* streamMaintenancePlan(
 Vehicle Health Score: ${healthScore}/100
 
 Component RUL (Remaining Useful Life):
-${rulData.map(c => `- ${c.name}: ${c.daysLeft} days remaining (of ${c.totalDays} total) — Urgency: ${c.urgency.toUpperCase()} — Prediction Confidence: ${c.confidence}%`).join('\n')}
+${rulData.map(c => `- ${c.name}: ${c.daysLeft} days remaining (of ${c.totalDays} total) - Urgency: ${c.urgency.toUpperCase()} - Prediction Confidence: ${c.confidence}%`).join('\n')}
 
-Create a prioritized maintenance schedule with cost estimates.`;
+Create a prioritized maintenance schedule. You MUST output a structured Markdown table as instructed.`;
 
   const result = await withRetry(() => model.generateContentStream(prompt));
 

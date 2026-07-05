@@ -1,189 +1,176 @@
-# 🚗 EdgeAI — Vehicle Health & Predictive Maintenance
+﻿# Edge AI Vehicle Health & Predictive Maintenance 🚀
 
-> Real-time edge AI platform for vehicle health monitoring, anomaly detection using Welford's Online Algorithm, and predictive maintenance powered by Google Gemini.
+> **Team Hackaholics** submission for **InnoVent-27: AI at the Edge** 
+> *Developing solutions addressing key challenges in Automotive, Industrial Heavy Machinery, and Aerospace industries.*
 
-![Next.js](https://img.shields.io/badge/Next.js_16-000?logo=nextdotjs&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-2D3748?logo=prisma&logoColor=white)
-![Gemini](https://img.shields.io/badge/Google_Gemini-4285F4?logo=google&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)
+An advanced, edge-simulated, real-time telemetry and predictive maintenance platform. This project leverages AI, Generative AI, and IoT simulation to enable real-time processing, faster decisions, improved efficiency, and intelligent automation at the source.
 
 ---
 
-## What It Does
+## 📸 Screenshots
 
-EdgeAI simulates an **on-vehicle edge computing system** that monitors sensor telemetry in real-time, detects anomalies using statistical methods, and provides AI-powered diagnostics — all without relying on cloud round-trips for critical decisions.
+| Fleet Dashboard | Telemetry Stream |
+| :---: | :---: |
+| <img src="docs/fleet.png" width="400" alt="Dashboard showing fleet health and total vehicles"/> | <img src="docs/dashboard.png" width="400" alt="Live engine telemetry stream"/> |
 
-### Key Features
-
-- **🔴 Live Sensor Dashboard** — 6 sensors streaming at 300ms intervals via SSE (Engine Temp, Vibration, Oil Pressure, Battery Voltage, Coolant Flow, Exhaust Temp)
-- **📊 Welford's Online Algorithm** — Incremental mean/variance computation for memory-efficient anomaly detection on edge hardware
-- **⚡ Z-Score Anomaly Detection** — Real-time statistical outlier detection with configurable warning/critical thresholds
-- **🔗 Pearson Correlation Engine** — Detects cross-sensor correlations (e.g., coolant drop → engine temp rise) to identify cascading failures
-- **🤖 Gemini AI Diagnostics** — Streaming AI-powered root cause analysis with full vehicle context, chat history, and actionable recommendations
-- **🔧 Predictive Maintenance Planner** — AI-generated prioritized service schedules with RUL (Remaining Useful Life) tracking for 8 components
-- **🚛 Fleet Management** — Multi-vehicle overview sorted by risk, with per-vehicle drill-down
-- **💥 Failure Scenario Injection** — Trigger realistic failure patterns (cooling leak, brake degradation, oil starvation, etc.) to demo anomaly detection
-- **⏱️ Edge vs Cloud Latency Race** — Visual comparison showing why edge inference matters for safety-critical decisions
+| AI Agentic Diagnosis | Predictive Maintenance (RUL) |
+| :---: | :---: |
+| <img src="docs/diagnostics.png" width="400" alt="Chat interface diagnosing engine faults"/> | <img src="docs/maintenance.png" width="400" alt="Remaining useful life of components"/> |
 
 ---
 
-## Architecture
+## 🎯 The Problem & Our Solution
 
+**The Challenge:** Heavy machinery and commercial vehicle breakdowns cost billions annually. Traditional telemetry data is often sent to the cloud raw, resulting in high latency, massive bandwidth costs, and delayed decision-making.
+
+**The Solution:** We push the intelligence to the edge. By running simulation and anomaly detection locally, we only transmit critical state changes (batched) to the cloud. When an anomaly occurs, our **Agentic AI** kicks in to diagnose the root cause in real-time, drastically reducing downtime.
+
+---
+
+## ✨ Key Features (MVP)
+
+- **Real-Time IoT Telemetry Simulation:** A custom engine streaming sensor data (engine temp, oil pressure, RPM) via Server-Sent Events (SSE) directly to the frontend.
+- **Agentic AI Diagnostics:** Integration with **Google Gemini (Flash Lite)** to analyze real-time engine context and provide actionable diagnostic steps when an anomaly is detected.
+- **Predictive Maintenance (RUL):** Uses degradation algorithms to calculate the Remaining Useful Life (RUL) of critical components and predict service dates.
+- **Enterprise-Grade Multi-Tenancy:** Secure data isolation using PostgreSQL and NextAuth, ensuring fleets only see their own vehicle data.
+- **High-Frequency Data Batching:** An asynchronous, in-memory buffering system that batches IoT data writes to PostgreSQL, preventing connection exhaustion.
+- **Cursor-Based Pagination:** O(1) database queries for the anomaly logs to handle massive time-series datasets efficiently.
+
+---
+
+## 🏗 Architecture
+
+Our system is built on a modern, decoupled architecture designed for scale and edge performance:
+
+```mermaid
+graph TD
+    subgraph "Edge Node (Vehicle)"
+        Sim[IoT Engine Simulator]
+        Sensors[Sensor Data]
+        AD[Anomaly Detection]
+        Sim --> Sensors
+        Sensors --> AD
+    end
+
+    subgraph "Cloud Backend (Next.js Serverless)"
+        API[SSE Telemetry API]
+        Batch[Memory Buffer & Flusher]
+        Auth[NextAuth Session Manager]
+    end
+    
+    subgraph "External APIs"
+        Gemini[Google Gemini API]
+    end
+
+    subgraph "Persistence"
+        DB[(PostgreSQL)]
+    end
+
+    subgraph "Client App"
+        UI[Fleet Dashboard UI]
+        AI[Agentic AI Chat]
+    end
+
+    AD -- Server-Sent Events --> API
+    API -- Streams Data --> UI
+    API -- Buffers Data --> Batch
+    Batch -- Bulk Inserts (5s) --> DB
+    UI -- Auth Check --> Auth
+    Auth -- Validates --> DB
+    AI -- Analyzes Context --> Gemini
 ```
-┌─────────────────────────────────────────────────────┐
-│                    Browser (Dashboard)               │
-│   SSE Stream ←── /api/sensors/stream                │
-│   Gemini Chat ←── /api/ai/diagnose                  │
-├─────────────────────────────────────────────────────┤
-│                  Next.js Server (Edge Node)          │
-│  ┌───────────────┐  ┌──────────────┐  ┌──────────┐ │
-│  │ Simulation     │  │ Welford's    │  │ Pearson  │ │
-│  │ Engine         │→ │ Stats Engine │→ │ Corr.    │ │
-│  │ (6 sensors)    │  │ + Z-Score    │  │ Detector │ │
-│  └───────────────┘  └──────────────┘  └──────────┘ │
-│          ↓                    ↓                      │
-│  ┌───────────────┐  ┌──────────────┐                │
-│  │ RUL Tracker    │  │ Anomaly Log  │                │
-│  │ (8 components) │  │ + Alerts     │                │
-│  └───────────────┘  └──────────────┘                │
-│          ↓                    ↓                      │
-│  ┌──────────────────────────────────┐               │
-│  │     Google Gemini (Diagnostics)   │               │
-│  └──────────────────────────────────┘               │
-├─────────────────────────────────────────────────────┤
-│  PostgreSQL (Optional — anomaly history, snapshots)  │
-└─────────────────────────────────────────────────────┘
-```
 
 ---
 
-## Tech Stack
+## 🛠 Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 16 (App Router), React 19, Recharts, Lucide Icons |
-| Styling | Tailwind CSS 4, DM Sans + JetBrains Mono |
-| Backend | Next.js API Routes, SSE (Server-Sent Events) |
-| AI | Google Gemini 2.5 Flash (streaming) |
-| Database | PostgreSQL + Prisma ORM (optional for demo) |
-| Auth | NextAuth.js (JWT sessions) |
-| Algorithms | Welford's Online Algorithm, Z-Score Detection, Pearson Correlation |
+- **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v4, Recharts
+- **Backend:** Next.js Serverless API Routes, Server-Sent Events (SSE)
+- **Database:** PostgreSQL (via Docker), Prisma ORM
+- **Authentication:** NextAuth.js (JWT Strategy)
+- **AI Integration:** Google Generative AI SDK (`gemini-3.1-flash-lite`)
 
 ---
 
-## Getting Started
+## 🚀 Getting Started (Local Development)
 
-### Prerequisites
+### 1. Prerequisites
+- Node.js (v20+)
+- Docker Desktop (for local PostgreSQL)
+- Google Gemini API Key
 
-- Node.js 18+
-- npm
-
-### Setup
-
+### 2. Clone the Repository
 ```bash
-# Clone the repository
-git clone https://github.com/abhinav-atul/edge-ai-vehicle-health.git
+git clone https://github.com/DivyaMishra896/edge-ai-vehicle-health.git
 cd edge-ai-vehicle-health
-
-# Install dependencies
 npm install
+```
 
-# Copy environment file
-cp .env.example .env
+### 3. Environment Setup
+Create a `.env` file in the root directory and copy the contents from `.env.example`:
+```bash
+# Database - points at a local Postgres container on port 5433
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/edgeai?schema=public
+DIRECT_URL=postgresql://postgres:postgres@localhost:5433/edgeai?schema=public
 
-# Start development server
+# Google Gemini API
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-3.1-flash-lite
+
+# NextAuth
+NEXTAUTH_SECRET=edgeai-local-dev-secret-change-me
+NEXTAUTH_URL=http://localhost:3000
+```
+
+### 4. Start the Database
+Spin up the local PostgreSQL instance using Docker:
+```bash
+docker run -d --name edgeai-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=edgeai -p 5433:5432 postgres:16
+```
+
+### 5. Run Database Migrations & Seeding
+This will create the necessary tables and populate the default Fleet Admin account and 5 simulation vehicles.
+```bash
+npx prisma migrate deploy
+npx prisma generate
+npx prisma db seed
+```
+
+### 6. Start the Development Server
+```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Demo Credentials
-
-```
-Email:    admin@edgeai.com
-Password: admin123
-```
-
-### Optional: Database (PostgreSQL)
-
-The app works fully without a database. To enable anomaly history persistence:
-
-```bash
-# Start a local Postgres container
-docker run -d --name edgeai-postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_DB=edgeai \
-  -p 5433:5432 postgres:16
-
-# Run migrations
-npx prisma migrate deploy
-
-# Seed initial data
-npx prisma db seed
-```
-
-### Optional: AI Diagnostics (Gemini)
-
-Add your Google Gemini API key to `.env`:
-
-```
-GEMINI_API_KEY=your-api-key-here
-```
-
-The app shows a graceful error message if the key is not configured.
+**Default Login Credentials:**
+- **Email:** `admin@edgeai.com`
+- **Password:** `admin123`
 
 ---
 
-## Project Structure
+## 📊 Current Status of the MVP
 
-```
-├── app/
-│   ├── api/
-│   │   ├── ai/              # Gemini streaming diagnostics
-│   │   ├── anomaly/          # Anomaly injection & logging
-│   │   ├── auth/             # NextAuth authentication
-│   │   ├── fleet/            # Fleet status endpoint
-│   │   ├── health/           # Health score & history
-│   │   ├── maintenance/      # Maintenance plan generation
-│   │   └── sensors/stream/   # SSE sensor telemetry stream
-│   ├── dashboard/            # Live telemetry monitor
-│   ├── diagnostics/          # AI diagnostic chat
-│   ├── fleet/                # Fleet overview
-│   ├── history/              # Anomaly history
-│   ├── login/                # Authentication
-│   └── maintenance/          # Predictive maintenance
-├── components/               # Reusable UI components
-├── lib/
-│   ├── engine.ts             # Simulation engine + Welford's + Z-Score
-│   ├── fleet.ts              # Multi-vehicle fleet manager
-│   ├── gemini.ts             # Gemini AI integration
-│   └── prisma.ts             # Database client
-└── prisma/                   # Schema & migrations
-```
+The project is currently a **fully functional prototype** ready for hackathon demonstration. 
+- ✅ **Completed:** Real-time telemetry simulation (SSE), multi-tenant secure database backend (PostgreSQL + NextAuth), asynchronous DB write batching, and Agentic AI diagnostic chat (Gemini).
+- ✅ **Completed:** Cursor-based pagination for handling deep anomaly logs and dynamic Remaining Useful Life (RUL) algorithms.
+- 🚧 **Simulated Constraints:** The "Edge Node" is currently simulated via server-side intervals due to hackathon time constraints and the lack of physical hardware. The telemetry logic represents exactly how the C++ edge software would function on actual vehicle ECUs.
 
 ---
 
-## Algorithms
+## 🔮 Future Scope
 
-### Welford's Online Algorithm
-Computes running mean and variance in a single pass with O(1) memory — ideal for resource-constrained edge devices that can't store full sensor history.
-
-### Z-Score Anomaly Detection
-Uses the Welford-computed statistics to flag readings that deviate significantly from the running mean. Configurable thresholds: **Warning** at Z > 2.5, **Critical** at Z > 3.75.
-
-### Pearson Correlation Detection
-Monitors cross-sensor relationships in sliding windows to detect cascading failures (e.g., coolant flow drop correlating with engine temperature rise).
+- **True Edge Deployment:** Port the simulation engine into a lightweight Rust or C++ daemon to run directly on physical Raspberry Pi or vehicle ECUs.
+- **Federated Learning:** Train anomaly detection models locally on the edge node without sending raw data to the cloud.
+- **TimescaleDB Integration:** Move from standard PostgreSQL tables to TimescaleDB hypertables for optimized time-series storage at massive scale.
+- **Over-The-Air (OTA) Updates:** Ability to push new predictive maintenance algorithms directly to the edge nodes.
 
 ---
 
-## Note
+## 👥 Team Hackaholics
 
-This is a **hackathon prototype**. Sensor data is simulated using a mathematical engine with Gaussian noise and configurable failure scenarios. In production, the simulation engine would be replaced with real OBD-II / CAN bus telemetry from vehicle hardware, while the anomaly detection algorithms (Welford's, Z-Score, Pearson) would operate on real data without changes.
-
----
-
-## Team
-
-Built for hackathon demonstration.
+- **Vaidehi Dadheech**
+- **Divya Mishra**
+- **Devansh Bansal**
+- **Abhinav Atul**
+- **Krish Goyal**

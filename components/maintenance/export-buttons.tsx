@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { Download, FileText, FileSpreadsheet } from 'lucide-react';
@@ -24,7 +24,7 @@ export function ExportButtons({ components, planText }: ExportButtonsProps) {
     ]);
 
     const csv = [
-      `EdgeAI Vehicle Health — Maintenance Report`,
+      `EdgeAI Vehicle Health - Maintenance Report`,
       `Generated: ${new Date().toLocaleString()}`,
       '',
       headers.join(','),

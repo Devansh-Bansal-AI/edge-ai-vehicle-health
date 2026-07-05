@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useCallback, useRef } from 'react';
 import { Zap, Cloud, Cpu, Play } from 'lucide-react';
@@ -6,9 +6,9 @@ import { Zap, Cloud, Cpu, Play } from 'lucide-react';
 export function EdgeCloudRace() {
   const [edgeWidth, setEdgeWidth] = useState(0);
   const [cloudWidth, setCloudWidth] = useState(0);
-  const [edgeTime, setEdgeTime] = useState('—');
-  const [cloudTime, setCloudTime] = useState('—');
-  const [speedup, setSpeedup] = useState('—');
+  const [edgeTime, setEdgeTime] = useState('-');
+  const [cloudTime, setCloudTime] = useState('-');
+  const [speedup, setSpeedup] = useState('-');
   const [racing, setRacing] = useState(false);
   const edgeRef = useRef<NodeJS.Timeout | null>(null);
   const cloudRef = useRef<NodeJS.Timeout | null>(null);
@@ -20,7 +20,7 @@ export function EdgeCloudRace() {
     setCloudWidth(0);
     setEdgeTime('...');
     setCloudTime('...');
-    setSpeedup('—');
+    setSpeedup('-');
 
     const edgeLat = 1.5 + Math.random() * 2;
     const cloudLat = 120 + Math.random() * 60;
@@ -108,7 +108,7 @@ export function EdgeCloudRace() {
       </div>
 
       {/* Speedup */}
-      {speedup !== '—' && (
+      {speedup !== '-' && (
         <div className="mt-4 flex items-center justify-center">
           <span className="text-xs text-gray-500">Edge is </span>
           <span className="text-lg font-mono font-bold text-rose-600 mx-1.5">{speedup}</span>

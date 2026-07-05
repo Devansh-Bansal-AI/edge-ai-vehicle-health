@@ -1,9 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { fleetManager } from '@/lib/fleet';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    const tenantId = (session?.user as any)?.tenantId;
+
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json().catch(() => ({}));
     const { sensor, faultType, scenarioId, vehicleId = 'default-vehicle' } = body as {
       sensor?: string;
@@ -11,6 +20,15 @@ export async function POST(request: NextRequest) {
       scenarioId?: string;
       vehicleId?: string;
     };
+
+    // Verify tenant ownership of the vehicle
+    const dbVehicle = await prisma.vehicle.findFirst({
+      where: { id: vehicleId, tenantId: tenantId }
+    });
+
+    if (!dbVehicle) {
+      return NextResponse.json({ error: 'Vehicle not found or unauthorized' }, { status: 403 });
+    }
 
     const vehicle = fleetManager.getVehicle(vehicleId) ?? fleetManager.getVehicle('default-vehicle')!;
 
@@ -34,7 +52,7 @@ export async function POST(request: NextRequest) {
           },
         });
       } catch {
-        // DB not configured — skip persistence
+        // DB persistence failed - skip
       }
 
       return NextResponse.json({
@@ -65,7 +83,7 @@ export async function POST(request: NextRequest) {
         },
       });
     } catch {
-      // DB not configured — skip persistence
+      // DB persistence failed - skip
     }
 
     return NextResponse.json({

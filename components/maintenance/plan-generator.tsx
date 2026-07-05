@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface PlanGeneratorProps {
   onPlanGenerated?: (text: string) => void;
@@ -86,10 +88,10 @@ export function PlanGenerator({ onPlanGenerated, vehicleId = 'default-vehicle' }
 
       {plan && (
         <div className="p-5 max-h-96 overflow-y-auto scrollbar-thin">
-          <pre className="text-xs text-gray-700 font-mono whitespace-pre-wrap leading-relaxed">
-            {plan}
-            {loading && <span className="inline-block w-2 h-4 bg-rose-400 ml-0.5 animate-pulse" />}
-          </pre>
+          <div className="markdown-response">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{plan}</ReactMarkdown>
+            {loading && <span className="inline-block w-2 h-4 bg-rose-400 ml-0.5 animate-pulse align-middle" />}
+          </div>
         </div>
       )}
     </div>

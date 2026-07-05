@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -83,13 +83,13 @@ function DashboardContent() {
             if (anomaly.severity === 'critical') {
               const sensorName = SENSORS[anomaly.sensor]?.name ?? anomaly.sensor;
               toast.error(`🚨 Critical Anomaly: ${sensorName}`, {
-                description: `Z-Score: ${anomaly.zScore.toFixed(2)} — Fault: ${anomaly.faultType}`,
+                description: `Z-Score: ${anomaly.zScore.toFixed(2)} - Fault: ${anomaly.faultType}`,
                 duration: 6000,
               });
             } else if (anomaly.severity === 'warning') {
               const sensorName = SENSORS[anomaly.sensor]?.name ?? anomaly.sensor;
               toast.warning(`⚠️ Warning: ${sensorName}`, {
-                description: `Z-Score: ${anomaly.zScore.toFixed(2)} — Fault: ${anomaly.faultType}`,
+                description: `Z-Score: ${anomaly.zScore.toFixed(2)} - Fault: ${anomaly.faultType}`,
                 duration: 4000,
               });
             }
@@ -123,7 +123,7 @@ function DashboardContent() {
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        {/* Main Content — Sensor Grid */}
+        {/* Main Content - Sensor Grid */}
         <div className="col-span-12 xl:col-span-8 space-y-6">
           <SensorGrid readings={readings} history={history} />
 
