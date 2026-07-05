@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import {
   LayoutDashboard, Wrench, Terminal, History, Zap, LogOut, Truck,
 } from 'lucide-react';
@@ -87,13 +88,13 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="px-3 py-4 border-t border-rose-100">
-        <Link
-          href="/api/auth/signout"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-all w-full"
         >
           <LogOut className="w-4 h-4" />
           <span>Sign Out</span>
-        </Link>
+        </button>
       </div>
     </aside>
   );

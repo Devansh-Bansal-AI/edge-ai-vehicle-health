@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -32,7 +33,9 @@ export default function RootLayout({
       className={`${dmSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-[#fce9ed] text-gray-900">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
         <Toaster theme="light" richColors position="top-right" />
       </body>
     </html>
